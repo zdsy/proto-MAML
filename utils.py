@@ -32,16 +32,6 @@ def manage_checkpoints(checkpoint_dir, max_checkpoints):
             os.remove(os.path.join(checkpoint_dir, chkpt))
 
 
-def grab_model(name, mod, out_dim):
-    if name == 'CNN':
-        model = StandardCNN(out_dim=out_dim, **mod)
-    elif name == 'Hybrid':
-        model = StandardHybrid(out_dim=out_dim, **mod)
-    # elif name == 'ACDNet':
-    #     model = GetACDNetModel(out_dim=out_dim, **mod)
-    return model
-
-
 def Acc(logits, ground_truth):
     _, predicted_labels = torch.max(logits, 1)
     accuracy = (predicted_labels == ground_truth).float().mean()

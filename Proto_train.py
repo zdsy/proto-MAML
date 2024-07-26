@@ -1,6 +1,5 @@
 from data_loader import ESC50Dataset
 import proto_net
-# from Att_Proto import att_encoder
 from utils import episodic_sampling
 import torch
 import pandas as pd
@@ -9,7 +8,7 @@ import os
 from tqdm import tqdm
 
 # Load the metadata file
-meta_data = pd.read_csv('../ESC-50/meta/esc50.csv')
+meta_data = pd.read_csv('../ESC-50/meta/esc50.csv') # Specify your dataset path here
 
 np.random.seed(66)
 classes = np.arange(50)
@@ -22,7 +21,7 @@ train_meta = meta_data[meta_data.target.isin(train_classes)]
 val_meta = meta_data[meta_data.target.isin(val_classes)]
 test_meta = meta_data[meta_data.target.isin(test_classes)]
 
-train_dataset = ESC50Dataset('../ESC-50/audio', train_meta)
+train_dataset = ESC50Dataset('../ESC-50/audio', train_meta) # Also here
 val_dataset = ESC50Dataset('../ESC-50/audio', val_meta)
 test_dataset = ESC50Dataset('../ESC-50/audio', test_meta)
 
@@ -33,17 +32,11 @@ test_dataset.meta_data = test_dataset.meta_data.reset_index(drop=True)
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 print(f"Using device: {device}")
 
-# Training loop
 proto = proto_net.load_protonet_conv([1, 128, 431], 64, 64).to(device)
 
 optimizer = torch.optim.Adam(proto.parameters(), lr=1e-3)
 
-# checkpoint_path = '../Proto_checkpoints/5-way-5-shot(99)'  # Update this path
-# checkpoint = torch.load(checkpoint_path)
-# proto.load_state_dict(checkpoint['model_state_dict'])
-# optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
-
-epochs = 50000
+epochs = 5000
 episodes = 8
 val_eps = 500
 min_improvement = 1e-3
@@ -51,7 +44,7 @@ best_val_acc = 0
 best_epoch = 0
 patience = 20
 patience_counter = 0
-checkpoint_dir = '../Proto_checkpoints/ESC-50/10-way-1-shot'
+checkpoint_dir = '' # Specify your checkpoint path
 os.makedirs(checkpoint_dir, exist_ok=True)
 
 for epoch in range(epochs):
@@ -60,7 +53,7 @@ for epoch in range(epochs):
     VAL_ACC = []
 
     for episode in tqdm(range(episodes), desc=f'Epoch {epoch+1}/{epochs}', leave=True):
-        s, q = episodic_sampling(10, 1, train_classes, train_dataset)
+        s, q = episodic_sampling(5, 5, train_classes, train_dataset)
         s = s.to(device)
         q = q.to(device)
         optimizer.zero_grad()
@@ -82,7 +75,7 @@ for epoch in range(epochs):
 
     if (epoch + 1) % 50 == 0:
         for val_ep in tqdm(range(val_eps), desc=f'Test_epoch {epoch + 1}/{epochs}', leave=True):
-            s_v, q_v = episodic_sampling(10, 1, val_classes, val_dataset)
+            s_v, q_v = episodic_sampling(5, 5, val_classes, val_dataset)
             s_v = s_v.to(device)
             q_v = q_v.to(device)
             with torch.no_grad():
